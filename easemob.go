@@ -69,7 +69,7 @@ func (em *EM) refreshToken() bool {
 			`client_secret`: em.clientSecret,
 		}).
 		SetResult(map[string]interface{}{}).
-		Post(em.baseURL + `/token`)
+		Post(em.url(`/token`))
 	info := *resp.Result().(*map[string]interface{})
 	if token, ok := info[`access_token`].(string); ok {
 		em.token = token
