@@ -1,6 +1,7 @@
 package easemob
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/go-resty/resty"
@@ -29,6 +30,7 @@ func (em *EM) init() {
 		r.SetHeader("Accept", "application/json")
 		r.SetHeader(`Content-Type`, `application/json`)
 		r.SetResult(map[string]interface{}{})
+		r.SetError(map[string]interface{}{})
 		return nil
 	})
 
@@ -36,15 +38,29 @@ func (em *EM) init() {
 	go em.refreshToken()
 }
 
-func (em *EM) RegisterSignelUser(username, password string) (bool, error) {
+func (em *EM) RegisterSignelUser(username, password string) error {
 	resp, err := em.excute(resty.R().SetBody(map[string]string{
 		`username`: username,
 		`password`: password,
 	}), resty.MethodPost, em.url(`/users`))
 	if err != nil {
-		return false, err
+		return err
 	}
-	return resp.StatusCode() == http.StatusOK, nil
+	if resp.StatusCode() != http.StatusOK {
+		return fmt.Errorf(`em error: %v`, resp.Error())
+	}
+	return nil
+}
+
+func (em *EM) DeleteUser(username string) error {
+	resp, err := em.excute(resty.R(), resty.MethodDelete, em.url(fmt.Sprintf(`/users/%s`, username)))
+	if err != nil {
+		return err
+	}
+	if resp.StatusCode() != http.StatusOK {
+		return fmt.Errorf(`em error: %v`, resp.Error())
+	}
+	return nil
 }
 
 func (em *EM) excute(request *resty.Request, method, url string) (*resty.Response, error) {
