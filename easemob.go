@@ -7,6 +7,7 @@ import (
 	"github.com/go-resty/resty"
 )
 
+// EM ...
 type EM struct {
 	clientID     string
 	clientSecret string
@@ -14,6 +15,7 @@ type EM struct {
 	token        string
 }
 
+// New ...
 func New(clientID, clientSecret, baseURL string) *EM {
 	em := &EM{clientID, clientSecret, baseURL, ``}
 	em.init()
@@ -35,9 +37,10 @@ func (em *EM) init() {
 	})
 
 	// 更新token
-	go em.refreshToken()
+	// go em.refreshToken()
 }
 
+// RegisterSignelUser ...
 func (em *EM) RegisterSignelUser(username, password string) error {
 	resp, err := em.excute(resty.R().SetBody(map[string]string{
 		`username`: username,
@@ -52,6 +55,7 @@ func (em *EM) RegisterSignelUser(username, password string) error {
 	return nil
 }
 
+// DeleteUser ...
 func (em *EM) DeleteUser(username string) error {
 	resp, err := em.excute(resty.R(), resty.MethodDelete, em.url(fmt.Sprintf(`/users/%s`, username)))
 	if err != nil {
@@ -61,6 +65,20 @@ func (em *EM) DeleteUser(username string) error {
 		return fmt.Errorf(`em error: %v`, resp.Error())
 	}
 	return nil
+}
+
+// SendCMDMsg 忽略服务端返回的发送结果
+func (em *EM) SendCMDMsg(targets []string, action string) error {
+	_, err := em.excute(resty.R().SetBody(map[string]interface{}{
+		`target_type`: `users`,
+		`target`:      targets,
+		`msg`: map[string]string{
+			`type`:   `cmd`,
+			`action`: action,
+		},
+	}), resty.MethodPost, em.url(`/messages`))
+
+	return err
 }
 
 func (em *EM) excute(request *resty.Request, method, url string) (*resty.Response, error) {
