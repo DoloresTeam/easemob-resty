@@ -3,12 +3,14 @@ package easemob
 import (
 	"fmt"
 	"net/http"
+	"sync"
 
 	"github.com/go-resty/resty"
 )
 
 // EM ...
 type EM struct {
+	sync.Mutex
 	clientID     string
 	clientSecret string
 	baseURL      string
@@ -17,7 +19,7 @@ type EM struct {
 
 // New ...
 func New(clientID, clientSecret, baseURL string) *EM {
-	em := &EM{clientID, clientSecret, baseURL, ``}
+	em := &EM{clientID: clientID, clientSecret: clientSecret, baseURL: baseURL}
 	em.init()
 	return em
 }
@@ -37,7 +39,7 @@ func (em *EM) init() {
 	})
 
 	// 更新token
-	// go em.refreshToken()
+	go em.refreshToken()
 }
 
 // RegisterSignelUser ...
@@ -96,6 +98,8 @@ func (em *EM) excute(request *resty.Request, method, url string) (*resty.Respons
 }
 
 func (em *EM) refreshToken() bool {
+	em.Lock()
+	em.Unlock()
 	resp, _ := resty.New().SetDebug(true).R().
 		SetBody(map[string]string{
 			`grant_type`:    `client_credentials`,
